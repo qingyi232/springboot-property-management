@@ -1,0 +1,212 @@
+-- 角色表
+CREATE TABLE IF NOT EXISTS sys_role (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    role_name VARCHAR(50) NOT NULL COMMENT '角色名称',
+    role_code VARCHAR(50) NOT NULL COMMENT '角色编码',
+    description VARCHAR(200) COMMENT '描述',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted TINYINT DEFAULT 0
+) COMMENT '角色表';
+
+-- 菜单/权限表
+CREATE TABLE IF NOT EXISTS sys_menu (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    parent_id BIGINT DEFAULT 0 COMMENT '父菜单ID',
+    name VARCHAR(50) NOT NULL COMMENT '菜单名称',
+    path VARCHAR(200) COMMENT '路由路径',
+    component VARCHAR(200) COMMENT '组件路径',
+    permission VARCHAR(100) COMMENT '权限标识',
+    icon VARCHAR(50) COMMENT '图标',
+    sort_order INT DEFAULT 0 COMMENT '排序',
+    menu_type TINYINT DEFAULT 0 COMMENT '0目录 1菜单 2按钮',
+    visible TINYINT DEFAULT 1 COMMENT '是否可见',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP
+) COMMENT '菜单权限表';
+
+-- 角色菜单关联表
+CREATE TABLE IF NOT EXISTS sys_role_menu (
+    role_id BIGINT NOT NULL,
+    menu_id BIGINT NOT NULL,
+    PRIMARY KEY (role_id, menu_id)
+) COMMENT '角色菜单关联表';
+
+-- 系统用户表(管理员/员工)
+CREATE TABLE IF NOT EXISTS sys_user (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    username VARCHAR(50) NOT NULL UNIQUE COMMENT '账号',
+    password VARCHAR(200) NOT NULL COMMENT '密码',
+    real_name VARCHAR(50) COMMENT '真实姓名',
+    phone VARCHAR(20) COMMENT '联系电话',
+    email VARCHAR(100) COMMENT '邮箱',
+    avatar VARCHAR(500) COMMENT '头像',
+    status TINYINT DEFAULT 1 COMMENT '1启用 0禁用',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted TINYINT DEFAULT 0
+) COMMENT '系统用户表';
+
+-- 用户角色关联表
+CREATE TABLE IF NOT EXISTS sys_user_role (
+    user_id BIGINT NOT NULL,
+    role_id BIGINT NOT NULL,
+    PRIMARY KEY (user_id, role_id)
+) COMMENT '用户角色关联表';
+
+-- 业主信息表
+CREATE TABLE IF NOT EXISTS live_user (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    username VARCHAR(50) NOT NULL UNIQUE COMMENT '账号',
+    password VARCHAR(200) NOT NULL COMMENT '密码',
+    real_name VARCHAR(50) COMMENT '姓名',
+    gender TINYINT DEFAULT 1 COMMENT '1男 2女',
+    phone VARCHAR(20) COMMENT '联系电话',
+    id_card VARCHAR(20) COMMENT '身份证号',
+    avatar VARCHAR(500) COMMENT '头像',
+    status TINYINT DEFAULT 1 COMMENT '1启用 0禁用',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted TINYINT DEFAULT 0
+) COMMENT '业主信息表';
+
+-- 楼栋信息表
+CREATE TABLE IF NOT EXISTS house_building (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(50) NOT NULL COMMENT '楼栋名称',
+    total_floors INT COMMENT '总楼层',
+    description VARCHAR(200) COMMENT '描述',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted TINYINT DEFAULT 0
+) COMMENT '楼栋信息表';
+
+-- 单元信息表
+CREATE TABLE IF NOT EXISTS house_unit (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    building_id BIGINT NOT NULL COMMENT '楼栋ID',
+    name VARCHAR(50) NOT NULL COMMENT '单元名称',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted TINYINT DEFAULT 0
+) COMMENT '单元信息表';
+
+-- 房屋信息表
+CREATE TABLE IF NOT EXISTS house_room (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    unit_id BIGINT NOT NULL COMMENT '单元ID',
+    room_number VARCHAR(20) NOT NULL COMMENT '房屋编号',
+    area DECIMAL(10,2) COMMENT '面积(㎡)',
+    status TINYINT DEFAULT 0 COMMENT '0空闲 1已绑定',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted TINYINT DEFAULT 0
+) COMMENT '房屋信息表';
+
+-- 车位信息表
+CREATE TABLE IF NOT EXISTS parking_lot (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    spot_number VARCHAR(20) NOT NULL COMMENT '车位编号',
+    area VARCHAR(50) COMMENT '区域',
+    monthly_fee DECIMAL(10,2) DEFAULT 0 COMMENT '月租金',
+    status TINYINT DEFAULT 0 COMMENT '0空闲 1已绑定',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted TINYINT DEFAULT 0
+) COMMENT '车位信息表';
+
+-- 业主房屋绑定表
+CREATE TABLE IF NOT EXISTS live_user_house (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id BIGINT NOT NULL COMMENT '业主ID',
+    house_id BIGINT NOT NULL COMMENT '房屋ID',
+    bind_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '绑定时间'
+) COMMENT '业主房屋绑定表';
+
+-- 业主车位绑定表
+CREATE TABLE IF NOT EXISTS live_user_parking (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id BIGINT NOT NULL COMMENT '业主ID',
+    parking_id BIGINT NOT NULL COMMENT '车位ID',
+    bind_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '绑定时间'
+) COMMENT '业主车位绑定表';
+
+-- 水费信息表
+CREATE TABLE IF NOT EXISTS fee_water (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    house_id BIGINT NOT NULL COMMENT '房屋ID',
+    user_id BIGINT COMMENT '业主ID',
+    amount DECIMAL(10,2) NOT NULL COMMENT '金额',
+    usage_amount DECIMAL(10,2) COMMENT '用水量(吨)',
+    fee_month VARCHAR(20) COMMENT '费用月份',
+    status TINYINT DEFAULT 0 COMMENT '0未缴费 1已缴费',
+    pay_time DATETIME COMMENT '缴费时间',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted TINYINT DEFAULT 0
+) COMMENT '水费信息表';
+
+-- 电费信息表
+CREATE TABLE IF NOT EXISTS fee_power (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    house_id BIGINT NOT NULL COMMENT '房屋ID',
+    user_id BIGINT COMMENT '业主ID',
+    amount DECIMAL(10,2) NOT NULL COMMENT '金额',
+    usage_amount DECIMAL(10,2) COMMENT '用电量(度)',
+    fee_month VARCHAR(20) COMMENT '费用月份',
+    status TINYINT DEFAULT 0 COMMENT '0未缴费 1已缴费',
+    pay_time DATETIME COMMENT '缴费时间',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted TINYINT DEFAULT 0
+) COMMENT '电费信息表';
+
+-- 停车费信息表
+CREATE TABLE IF NOT EXISTS fee_parking (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    parking_id BIGINT NOT NULL COMMENT '车位ID',
+    user_id BIGINT COMMENT '业主ID',
+    amount DECIMAL(10,2) NOT NULL COMMENT '金额',
+    fee_month VARCHAR(20) COMMENT '费用月份',
+    status TINYINT DEFAULT 0 COMMENT '0未缴费 1已缴费',
+    pay_time DATETIME COMMENT '缴费时间',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted TINYINT DEFAULT 0
+) COMMENT '停车费信息表';
+
+-- 反馈信息表
+CREATE TABLE IF NOT EXISTS user_complaint (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id BIGINT NOT NULL COMMENT '业主ID',
+    title VARCHAR(100) NOT NULL COMMENT '标题',
+    content TEXT COMMENT '内容',
+    status TINYINT DEFAULT 0 COMMENT '0待处理 1已处理',
+    reply TEXT COMMENT '回复内容',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted TINYINT DEFAULT 0
+) COMMENT '反馈信息表';
+
+-- 维修信息表
+CREATE TABLE IF NOT EXISTS user_repair (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id BIGINT NOT NULL COMMENT '业主ID',
+    title VARCHAR(100) NOT NULL COMMENT '标题',
+    content TEXT COMMENT '内容',
+    status TINYINT DEFAULT 0 COMMENT '0待处理 1处理中 2已完成',
+    reply TEXT COMMENT '处理备注',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted TINYINT DEFAULT 0
+) COMMENT '维修信息表';
+
+-- 公告表
+CREATE TABLE IF NOT EXISTS sys_notice (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    title VARCHAR(200) NOT NULL COMMENT '标题',
+    content TEXT COMMENT '内容',
+    creator_id BIGINT COMMENT '发布人ID',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted TINYINT DEFAULT 0
+) COMMENT '公告表';

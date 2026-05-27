@@ -1,0 +1,691 @@
+===========================================================================
+         基于 Spring Boot 的小区物业管理系统 — 代码说明文档
+===========================================================================
+
+===========================================================================
+目录
+===========================================================================
+
+一、技术栈总览
+二、项目目录结构
+三、后端架构设计
+四、后端核心代码说明
+五、前端架构设计
+六、前端核心代码说明
+七、数据库设计
+八、安全认证机制
+九、数据初始化机制
+十、前后端交互流程
+十一、各功能模块详解
+
+===========================================================================
+一、技术栈总览
+===========================================================================
+
+【后端技术】
+- Spring Boot 2.7.18    — Java Web 框架，提供自动配置和内嵌服务器
+- Spring Security        — 安全框架，处理认证和授权
+- MyBatis Plus 3.5.5     — ORM 框架，简化数据库操作
+- MySQL 8.0              — 关系型数据库
+- Druid                  — 数据库连接池
+- JWT (jjwt 0.9.1)       — JSON Web Token，用于无状态身份认证
+- Lombok                 — 简化 Java 代码（自动生成 getter/setter）
+- Hutool                 — Java 工具类库
+- Jackson                — JSON 序列化/反序列化
+
+【前端技术】
+- Vue 2.7               — 渐进式 JavaScript 框架
+- Element UI 2.15        — 基于 Vue 2 的组件库
+- Vuex                   — Vue 状态管理
+- Vue Router             — Vue 路由管理
+- Axios                  — HTTP 请求库
+- ECharts 5.4.3          — 数据可视化图表库
+
+【架构模式】
+- B/S 架构（Browser/Server）
+- 前后端分离
+- RESTful API 设计
+- JWT 无状态认证
+
+===========================================================================
+二、项目目录结构
+===========================================================================
+
+基于Spring Boot的小区物业管理系统设计与实现/
+├── backend/                          ← 后端项目根目录
+│   ├── pom.xml                       ← Maven 依赖配置
+│   └── src/main/
+│       ├── java/com/property/
+│       │   ├── PropertyApplication.java  ← 启动类
+│       │   ├── config/               ← 配置类
+│       │   │   ├── SecurityConfig.java      ← Spring Security 配置
+│       │   │   ├── CorsConfig.java          ← 跨域配置
+│       │   │   ├── MybatisPlusConfig.java   ← MyBatis Plus 配置
+│       │   │   └── DataInitializer.java     ← 数据初始化
+│       │   ├── controller/           ← 控制器层（处理 HTTP 请求）
+│       │   │   ├── AuthController.java         ← 登录认证
+│       │   │   ├── DashboardController.java    ← 仪表盘统计
+│       │   │   ├── SysRoleController.java      ← 角色管理
+│       │   │   ├── SysUserController.java      ← 系统用户管理
+│       │   │   ├── SysNoticeController.java    ← 公告管理
+│       │   │   ├── HouseBuildingController.java ← 楼栋管理
+│       │   │   ├── HouseUnitController.java    ← 单元管理
+│       │   │   ├── HouseRoomController.java    ← 房屋管理
+│       │   │   ├── ParkingLotController.java   ← 车位管理
+│       │   │   ├── LiveUserController.java     ← 业主管理
+│       │   │   ├── FeeWaterController.java     ← 水费管理
+│       │   │   ├── FeePowerController.java     ← 电费管理
+│       │   │   ├── FeeParkingController.java   ← 停车费管理
+│       │   │   ├── UserComplaintController.java ← 投诉管理
+│       │   │   └── UserRepairController.java   ← 报修管理
+│       │   ├── entity/               ← 实体类（对应数据库表）
+│       │   │   ├── SysUser.java         ← 系统用户
+│       │   │   ├── SysRole.java         ← 角色
+│       │   │   ├── SysMenu.java         ← 菜单/权限
+│       │   │   ├── SysRoleMenu.java     ← 角色-菜单关联
+│       │   │   ├── SysUserRole.java     ← 用户-角色关联
+│       │   │   ├── SysNotice.java       ← 公告
+│       │   │   ├── LiveUser.java        ← 业主用户
+│       │   │   ├── LiveUserHouse.java   ← 业主-房屋关联
+│       │   │   ├── LiveUserParking.java ← 业主-车位关联
+│       │   │   ├── HouseBuilding.java   ← 楼栋
+│       │   │   ├── HouseUnit.java       ← 单元
+│       │   │   ├── HouseRoom.java       ← 房屋
+│       │   │   ├── ParkingLot.java      ← 车位
+│       │   │   ├── FeeWater.java        ← 水费
+│       │   │   ├── FeePower.java        ← 电费
+│       │   │   ├── FeeParking.java      ← 停车费
+│       │   │   ├── UserComplaint.java   ← 投诉
+│       │   │   └── UserRepair.java      ← 报修
+│       │   ├── mapper/               ← 数据访问层（对应数据库操作）
+│       │   │   ├── SysUserMapper.java
+│       │   │   ├── SysRoleMapper.java
+│       │   │   ├── SysMenuMapper.java
+│       │   │   ├── SysRoleMenuMapper.java
+│       │   │   ├── SysUserRoleMapper.java
+│       │   │   ├── SysNoticeMapper.java
+│       │   │   ├── LiveUserMapper.java
+│       │   │   ├── LiveUserHouseMapper.java
+│       │   │   ├── LiveUserParkingMapper.java
+│       │   │   ├── HouseBuildingMapper.java
+│       │   │   ├── HouseUnitMapper.java
+│       │   │   ├── HouseRoomMapper.java
+│       │   │   ├── ParkingLotMapper.java
+│       │   │   ├── FeeWaterMapper.java
+│       │   │   ├── FeePowerMapper.java
+│       │   │   ├── FeeParkingMapper.java
+│       │   │   ├── UserComplaintMapper.java
+│       │   │   └── UserRepairMapper.java
+│       │   ├── service/              ← 服务层（业务逻辑）
+│       │   │   └── SysMenuService.java     ← 菜单树构建服务
+│       │   ├── security/             ← 安全相关
+│       │   │   ├── LoginUser.java          ← 自定义用户详情
+│       │   │   ├── UserDetailServiceImpl.java ← 用户认证服务
+│       │   │   └── CheckTokenFilter.java   ← JWT Token 过滤器
+│       │   ├── dto/                  ← 数据传输对象
+│       │   │   ├── LoginDto.java           ← 登录请求
+│       │   │   ├── RoleMenuDto.java        ← 角色-菜单分配
+│       │   │   └── UserRoleDto.java        ← 用户-角色分配
+│       │   └── utils/                ← 工具类
+│       │       ├── JwtUtils.java           ← JWT 工具
+│       │       ├── Result.java             ← 统一返回结果
+│       │       └── GlobalExceptionHandler.java ← 全局异常处理
+│       └── resources/
+│           ├── application.yml       ← 应用配置文件
+│           └── db/
+│               └── schema.sql        ← 数据库表结构 SQL
+│
+├── frontend/                         ← 前端项目根目录
+│   ├── package.json                  ← npm 依赖配置
+│   ├── vue.config.js                 ← Vue CLI 配置（代理等）
+│   └── src/
+│       ├── main.js                   ← 入口文件
+│       ├── App.vue                   ← 根组件
+│       ├── api/                      ← API 接口定义
+│       │   ├── auth.js                  ← 登录/用户信息接口
+│       │   └── index.js                 ← 所有业务 API 接口
+│       ├── utils/
+│       │   └── request.js               ← Axios 请求封装
+│       ├── store/
+│       │   └── index.js                 ← Vuex 状态管理
+│       ├── router/
+│       │   └── index.js                 ← 路由配置
+│       └── views/                    ← 页面组件
+│           ├── login/
+│           │   └── LoginView.vue        ← 登录页
+│           ├── layout/
+│           │   └── LayoutView.vue       ← 主布局（侧边栏+头部）
+│           ├── dashboard/
+│           │   └── DashboardView.vue    ← 仪表盘（ECharts图表）
+│           ├── system/
+│           │   ├── RoleManage.vue       ← 角色管理
+│           │   ├── UserManage.vue       ← 员工管理
+│           │   └── NoticeManage.vue     ← 公告管理
+│           ├── house/
+│           │   ├── BuildingManage.vue   ← 楼栋管理
+│           │   ├── UnitManage.vue       ← 单元管理
+│           │   ├── RoomManage.vue       ← 房屋管理
+│           │   └── ParkingManage.vue    ← 车位管理
+│           ├── owner/
+│           │   └── OwnerManage.vue      ← 业主管理
+│           ├── fee/
+│           │   ├── WaterFeeManage.vue   ← 水费管理
+│           │   ├── PowerFeeManage.vue   ← 电费管理
+│           │   └── ParkingFeeManage.vue ← 停车费管理
+│           ├── feedback/
+│           │   ├── ComplaintManage.vue  ← 投诉管理
+│           │   └── RepairManage.vue     ← 报修管理
+│           └── my/                   ← 业主端页面
+│               ├── MyInfo.vue           ← 个人信息
+│               ├── MyFee.vue            ← 我的费用
+│               ├── MyComplaint.vue      ← 我的反馈
+│               ├── MyRepair.vue         ← 我的报修
+│               └── MyNotice.vue         ← 公告查看
+│
+├── 测试账号.txt                      ← 测试账号信息
+├── 部署运行说明文档.txt              ← 部署运行指南
+└── 代码说明文档.txt                  ← 本文档
+
+===========================================================================
+三、后端架构设计
+===========================================================================
+
+后端采用经典的分层架构：
+
+┌─────────────────────────────────────┐
+│           Controller 层              │  接收 HTTP 请求，返回响应
+│  （AuthController, SysRoleController │
+│   FeeWaterController 等）            │
+├─────────────────────────────────────┤
+│           Service 层                 │  业务逻辑处理
+│  （SysMenuService 等）               │
+├─────────────────────────────────────┤
+│           Mapper 层                  │  数据库访问（MyBatis Plus）
+│  （SysUserMapper, FeeWaterMapper 等）│
+├─────────────────────────────────────┤
+│           Entity 层                  │  数据实体（对应数据库表）
+│  （SysUser, HouseRoom, FeeWater 等）│
+└─────────────────────────────────────┘
+
+请求处理流程：
+HTTP 请求 → CheckTokenFilter（JWT验证）
+         → Controller（接收请求、参数校验）
+         → Service（业务逻辑）
+         → Mapper（数据库操作）
+         → 数据库
+         → 返回 Result 统一响应
+
+===========================================================================
+四、后端核心代码说明
+===========================================================================
+
+【4.1 启动类 PropertyApplication.java】
+- @SpringBootApplication：标记为 Spring Boot 启动类
+- @MapperScan("com.property.mapper")：自动扫描 Mapper 接口
+
+【4.2 统一返回结果 Result.java】
+所有 API 返回统一格式：
+{
+    "code": 200,       // 状态码，200=成功，500=失败
+    "message": "xxx",  // 提示信息
+    "data": {...}      // 返回数据
+}
+
+【4.3 安全配置 SecurityConfig.java】
+- 禁用 CSRF（前后端分离不需要）
+- 使用无状态 Session（STATELESS）
+- /api/auth/** 路径放行（登录不需要 Token）
+- /api/** 其他路径需要认证
+- 添加 CheckTokenFilter 在 UsernamePasswordAuthenticationFilter 之前
+- 使用 BCryptPasswordEncoder 加密密码
+
+【4.4 JWT Token 过滤器 CheckTokenFilter.java】
+- 从请求头 Authorization 中获取 Bearer Token
+- 使用 JwtUtils 解析 Token，获取用户名和用户类型
+- 加载用户信息，设置到 SecurityContext
+- 放行请求继续处理
+
+【4.5 JWT 工具类 JwtUtils.java】
+- generateToken()：生成 Token（包含用户名、用户类型、过期时间）
+- getUsernameFromToken()：从 Token 解析用户名
+- getUserTypeFromToken()：从 Token 解析用户类型
+- validateToken()：验证 Token 是否有效
+- Token 有效期：24 小时
+
+【4.6 用户认证服务 UserDetailServiceImpl.java】
+- loadSysUser()：加载系统管理用户（从 sys_user 表）
+- loadLiveUser()：加载业主用户（从 live_user 表）
+- 构建 LoginUser 对象，包含用户信息和权限列表
+
+【4.7 菜单服务 SysMenuService.java】
+- getMenuTreeByUserId()：根据用户ID获取其有权访问的菜单树
+- getAllMenuTree()：获取完整菜单树（用于角色权限分配）
+- saveRoleMenus()：保存角色的菜单权限
+- getRoleMenuIds()：获取角色已有的菜单ID列表
+- buildTree()：将扁平菜单列表构建为树形结构
+
+【4.8 数据初始化 DataInitializer.java】
+- 实现 CommandLineRunner 接口，在应用启动后自动执行
+- 检查数据库是否已有数据，避免重复初始化
+- 初始化内容：菜单/权限、角色、系统用户、业主用户、楼栋、
+  单元、房屋、车位、绑定关系、费用记录、投诉、报修、公告
+- 所有密码使用 BCryptPasswordEncoder 正确哈希
+
+【4.9 全局异常处理 GlobalExceptionHandler.java】
+- 捕获所有运行时异常，统一返回 Result.fail() 格式
+- 避免向前端暴露原始错误堆栈
+
+【4.10 跨域配置 CorsConfig.java】
+- 允许所有来源访问（开发环境）
+- 允许所有请求方法和请求头
+- 允许携带凭证（Cookie、Token）
+
+【4.11 MyBatis Plus 配置 MybatisPlusConfig.java】
+- 配置分页插件（PaginationInnerInterceptor）
+- 配置自动填充处理器（createTime、updateTime 字段自动填充）
+
+===========================================================================
+五、前端架构设计
+===========================================================================
+
+前端采用 Vue 2 单页面应用（SPA）架构：
+
+┌─────────────────────────────────────┐
+│              App.vue                 │  根组件
+├─────────────────────────────────────┤
+│           Vue Router                 │  路由管理
+│  ┌─── /login ─── LoginView.vue      │
+│  ├─── / ─── LayoutView.vue          │  主布局
+│  │    ├── /dashboard                 │  仪表盘
+│  │    ├── /system/role               │  角色管理
+│  │    ├── /system/user               │  员工管理
+│  │    ├── /house/building            │  楼栋管理
+│  │    ├── /fee/water                 │  水费管理
+│  │    ├── /my/info                   │  业主个人信息
+│  │    └── ...                        │  其他页面
+├─────────────────────────────────────┤
+│              Vuex                     │  状态管理
+│  state: token, userInfo, menus,      │
+│         permissions, sidebarCollapse │
+├─────────────────────────────────────┤
+│           Axios (request.js)         │  HTTP 请求
+│  baseURL: /api                       │
+│  自动附加 Authorization 头           │
+│  响应拦截器处理错误                  │
+└─────────────────────────────────────┘
+
+===========================================================================
+六、前端核心代码说明
+===========================================================================
+
+【6.1 入口文件 main.js】
+- 引入 Vue、Element UI、Router、Store
+- 全局注册 Element UI 组件
+- 引入 ECharts
+
+【6.2 请求封装 utils/request.js】
+- 创建 Axios 实例，baseURL 为 /api
+- 请求拦截器：自动在请求头添加 Authorization: Bearer {token}
+- 响应拦截器：
+  - 如果后端返回 code !== 200，弹出错误提示
+  - 如果返回 401，说明 Token 过期，自动跳转到登录页
+  - 成功时直接返回 response.data
+
+【6.3 API 接口定义 api/index.js】
+所有 API 按模块分组导出：
+- roleApi：角色管理（list, all, add, update, delete, menuTree, assignMenus）
+- sysUserApi：员工管理（list, add, update, delete, getRoles, assignRoles, resetPwd）
+- liveUserApi：业主管理（list, all, add, update, delete, bindHouse, unbindHouse, 
+               bindParking, unbindParking, myInfo, updateMyInfo, resetPwd）
+- buildingApi：楼栋管理（list, all, add, update, delete）
+- unitApi：单元管理（list, byBuilding, add, update, delete）
+- roomApi：房屋管理（list, free, add, update, delete）
+- parkingApi：车位管理（list, free, add, update, delete）
+- waterFeeApi：水费管理（list, my, add, update, pay, delete）
+- powerFeeApi：电费管理（list, my, add, update, pay, delete）
+- parkingFeeApi：停车费管理（list, my, add, update, pay, delete）
+- complaintApi：投诉管理（list, my, add, handle, delete）
+- repairApi：报修管理（list, my, add, handle, delete）
+- noticeApi：公告管理（list, add, update, delete, detail）
+- dashboardApi：仪表盘统计（stats）
+
+【6.4 状态管理 store/index.js】
+State:
+- token：JWT Token，同步存储到 localStorage
+- userInfo：用户信息（userId, username, realName, userType）
+- menus：侧边栏菜单树（管理端）
+- permissions：用户权限列表
+- sidebarCollapse：侧边栏折叠状态
+
+Actions:
+- fetchUserInfo：登录后获取用户详细信息、菜单、权限
+
+【6.5 路由配置 router/index.js】
+- /login：登录页
+- /：主布局页，包含以下子路由：
+  - /dashboard：仪表盘
+  - /system/role：角色管理
+  - /system/user：员工管理
+  - /system/notice：公告管理
+  - /house/building：楼栋管理
+  - /house/unit：单元管理
+  - /house/room：房屋管理
+  - /house/parking：车位管理
+  - /owner/list：业主管理
+  - /fee/water：水费管理
+  - /fee/power：电费管理
+  - /fee/parking：停车费管理
+  - /feedback/complaint：投诉管理
+  - /feedback/repair：报修管理
+  - /my/info：个人信息（业主端）
+  - /my/fee：我的费用（业主端）
+  - /my/complaint：我的反馈（业主端）
+  - /my/repair：我的报修（业主端）
+  - /my/notice：公告查看（业主端）
+
+路由守卫：
+- 未登录用户访问非 /login 页面会被重定向到 /login
+- 自动设置页面标题
+
+【6.6 主布局 LayoutView.vue】
+- 左侧侧边栏：
+  - 管理端（userType === 'sys'）：根据后端返回的菜单树动态渲染
+  - 业主端（userType === 'live'）：显示固定的业主功能菜单
+- 顶部导航栏：面包屑导航 + 用户信息 + 退出登录
+- 主内容区：<router-view /> 渲染子路由组件
+
+【6.7 仪表盘 DashboardView.vue】
+- 顶部统计卡片：楼栋数、房屋数、车位数、业主数、公告数等
+- ECharts 图表：
+  - 月度费用统计（分组柱状图）
+  - 房屋/车位占用率（饼图）
+  - 缴费状态（堆叠柱状图）
+  - 投诉/报修处理状态（饼图）
+- 所有图表数据来自后端 /api/dashboard/stats 接口的真实数据
+
+【6.8 各管理页面通用模式】
+每个管理页面都遵循相同的设计模式：
+1. 搜索区：搜索条件 + 搜索按钮 + 新增按钮
+2. 数据表格：el-table 展示数据列表
+3. 分页组件：el-pagination
+4. 弹窗表单：el-dialog + el-form 用于新增/编辑
+5. 数据加载：created 钩子中调用 loadData()
+6. CRUD 操作：每个操作调用对应的 API 方法
+
+===========================================================================
+七、数据库设计
+===========================================================================
+
+数据库名：property_db
+字符集：utf8mb4
+
+【核心表结构】
+
+1. sys_user（系统用户表）
+   - id, username, password, real_name, phone, email, avatar
+   - status(0禁用/1启用), create_time, update_time, deleted(逻辑删除)
+
+2. sys_role（角色表）
+   - id, role_name, role_code, description
+   - create_time, update_time, deleted
+
+3. sys_menu（菜单权限表）
+   - id, parent_id, name, path, component, permission
+   - icon, sort_order, menu_type(0目录/1菜单/2按钮), visible
+   - create_time
+
+4. sys_user_role（用户-角色关联表）
+   - user_id, role_id（联合主键）
+
+5. sys_role_menu（角色-菜单关联表）
+   - role_id, menu_id（联合主键）
+
+6. sys_notice（公告表）
+   - id, title, content, creator_id, status
+   - create_time, update_time, deleted
+
+7. live_user（业主用户表）
+   - id, username, password, real_name, gender, phone, id_card
+   - create_time, update_time, deleted
+
+8. house_building（楼栋表）
+   - id, name, total_floors, description
+   - create_time, update_time, deleted
+
+9. house_unit（单元表）
+   - id, building_id, name
+   - create_time, update_time, deleted
+
+10. house_room（房屋表）
+    - id, unit_id, room_number, area, status(0空闲/1已绑定)
+    - create_time, update_time, deleted
+
+11. parking_lot（车位表）
+    - id, spot_number, area, monthly_fee, status(0空闲/1已绑定)
+    - create_time, update_time, deleted
+
+12. live_user_house（业主-房屋绑定表）
+    - id, user_id, house_id, create_time
+
+13. live_user_parking（业主-车位绑定表）
+    - id, user_id, parking_id, create_time
+
+14. fee_water（水费表）
+    - id, house_id, user_id, amount, usage_amount, fee_month
+    - status(0未缴/1已缴), pay_time
+    - create_time, update_time, deleted
+
+15. fee_power（电费表）
+    - id, house_id, user_id, amount, usage_amount, fee_month
+    - status(0未缴/1已缴), pay_time
+    - create_time, update_time, deleted
+
+16. fee_parking（停车费表）
+    - id, parking_id, user_id, amount, fee_month
+    - status(0未缴/1已缴), pay_time
+    - create_time, update_time, deleted
+
+17. user_complaint（投诉表）
+    - id, user_id, title, content, reply, status(0待处理/1已处理)
+    - create_time, update_time, deleted
+
+18. user_repair（报修表）
+    - id, user_id, title, content, reply
+    - status(0待处理/1处理中/2已完成)
+    - create_time, update_time, deleted
+
+【表关系】
+
+sys_user ←→ sys_role：多对多（通过 sys_user_role）
+sys_role ←→ sys_menu：多对多（通过 sys_role_menu）
+live_user ←→ house_room：多对多（通过 live_user_house）
+live_user ←→ parking_lot：多对多（通过 live_user_parking）
+house_building → house_unit：一对多
+house_unit → house_room：一对多
+house_room → fee_water/fee_power：一对多
+parking_lot → fee_parking：一对多
+live_user → user_complaint/user_repair：一对多
+
+===========================================================================
+八、安全认证机制
+===========================================================================
+
+本系统使用 JWT（JSON Web Token）实现无状态认证。
+
+【认证流程】
+
+1. 用户在前端登录页输入账号密码
+2. 前端发送 POST /api/auth/login 请求
+3. 后端 AuthController 验证密码（BCrypt）
+4. 验证通过后，使用 JwtUtils 生成 JWT Token
+5. Token 中包含：用户名、用户类型、过期时间
+6. 前端收到 Token 后存储在 localStorage 和 Vuex 中
+7. 之后每次请求，Axios 拦截器自动在请求头添加 Token：
+   Authorization: Bearer eyJhbGciOiJIUzUxMiJ9...
+
+【鉴权流程】
+
+1. 每个请求先经过 CheckTokenFilter
+2. 从请求头提取 Token
+3. 解析 Token，获取用户名和用户类型
+4. 加载用户信息和权限列表
+5. 设置到 Spring Security Context
+6. Controller 方法上的 @PreAuthorize 注解检查权限
+
+【权限控制】
+
+- 菜单级别：根据用户角色动态生成侧边栏菜单
+- 按钮级别：@PreAuthorize("hasAuthority('xxx')") 注解控制
+  例如：
+  @PreAuthorize("hasAuthority('sys:role:add')") → 需要角色新增权限
+  @PreAuthorize("hasAuthority('fee:water:list')") → 需要水费查看权限
+
+- 权限编码规则：模块:功能:操作
+  例如：sys:role:add, house:building:edit, fee:water:delete
+
+===========================================================================
+九、数据初始化机制
+===========================================================================
+
+系统采用 DataInitializer 类（实现 CommandLineRunner）在启动时自动初始化数据。
+
+【工作原理】
+1. Spring Boot 启动完成后自动执行 DataInitializer.run()
+2. 首先检查数据库是否已有角色数据
+3. 如果已有数据，跳过初始化（防止重复插入）
+4. 如果数据库为空，按顺序初始化所有数据
+
+【初始化顺序】
+1. 菜单权限（55条）：5个一级目录 + 14个二级菜单 + 36个按钮权限
+2. 角色（5个）：管理员、楼房管理员、业主管理员、收费管理员、反馈维修管理员
+3. 角色-菜单关联：为每个角色分配对应的权限
+4. 系统用户（5个）：admin, zhangwei, lina, wangfang, liuyang
+5. 用户-角色关联：为每个用户分配对应的角色
+6. 业主用户（5个）：owner1-owner5
+7. 楼栋（4栋）、单元（7个）、房屋（12间）
+8. 车位（8个）：A区3个、B区2个、C区3个
+9. 业主-房屋绑定（5条）、业主-车位绑定（4条）
+10. 水费记录（8条）、电费记录（7条）、停车费记录（6条）
+11. 投诉记录（4条）、报修记录（4条）
+12. 公告（3条）
+
+【密码处理】
+所有密码使用 BCryptPasswordEncoder 进行哈希加密，确保安全。
+默认密码均为 123456。
+
+===========================================================================
+十、前后端交互流程
+===========================================================================
+
+【以"管理员查看水费列表"为例】
+
+前端：
+1. WaterFeeManage.vue 组件的 created() 钩子调用 loadData()
+2. loadData() 调用 waterFeeApi.list({ current: 1, size: 10 })
+3. API 层发送 GET /api/fee/water/list?current=1&size=10
+4. Axios 拦截器自动添加 Authorization 头
+
+后端：
+5. CheckTokenFilter 验证 JWT Token
+6. FeeWaterController.list() 方法被调用
+7. @PreAuthorize 检查用户是否有 fee:water:list 权限
+8. 调用 FeeWaterMapper.selectPageWithDetail() 查询数据库
+9. SQL 联表查询获取水费记录 + 房屋编号 + 业主姓名
+10. 返回 Result.ok(分页数据)
+
+前端：
+11. 响应拦截器处理响应
+12. WaterFeeManage.vue 接收数据，赋值给 tableData
+13. el-table 组件自动渲染数据列表
+
+【以"业主缴纳水费"为例】
+
+前端：
+1. MyFee.vue 中用户点击"缴费"按钮
+2. 弹出确认框 "确认缴纳水费 ¥xx？"
+3. 用户确认后调用 waterFeeApi.pay(id)
+4. API 发送 PUT /api/fee/water/pay/5
+
+后端：
+5. Token 验证通过
+6. FeeWaterController.pay() 方法被调用
+7. 查询该水费记录，验证未缴费
+8. 更新 status = 1，payTime = 当前时间
+9. 返回 Result.ok("缴费成功")
+
+前端：
+10. 弹出成功提示 "缴费成功"
+11. 自动重新加载列表，显示更新后的状态
+
+===========================================================================
+十一、各功能模块详解
+===========================================================================
+
+【11.1 登录模块】
+- 支持管理端/业主端切换登录
+- 管理端用户查 sys_user 表，业主用户查 live_user 表
+- 登录成功返回 JWT Token
+- 登录后自动获取用户菜单和权限
+
+【11.2 仪表盘模块】
+- 展示概览统计数据（楼栋、房屋、车位、业主、公告数量）
+- 4个 ECharts 图表：
+  a. 月度费用统计（柱状图）：展示每月水费/电费/停车费金额
+  b. 房屋/车位占用率（饼图）：已占用 vs 空闲
+  c. 缴费状态（堆叠柱状图）：已缴 vs 未缴
+  d. 投诉/报修状态（饼图）：待处理 vs 处理中 vs 已完成
+
+【11.3 角色管理】
+- 角色列表：分页查询、按名称搜索
+- 新增/编辑角色：角色名称、角色编码、描述
+- 分配权限：树形选择菜单/按钮权限
+- 删除角色（逻辑删除）
+
+【11.4 员工管理】
+- 员工列表：分页查询、按姓名/手机号搜索
+- 新增员工：自动加密密码
+- 编辑员工：可修改基本信息
+- 分配角色：多选复选框
+- 重置密码：重置为 123456
+- 删除员工（逻辑删除）
+
+【11.5 楼栋/单元/房屋管理】
+- 楼栋：增删改查，记录楼栋名称和楼层数
+- 单元：增删改查，关联所属楼栋
+- 房屋：增删改查，关联单元、记录面积和状态
+  - 状态：0=空闲，1=已绑定（业主入住）
+
+【11.6 车位管理】
+- 车位号、所属区域、月租费
+- 状态：0=空闲，1=已绑定
+
+【11.7 业主管理】
+- 业主基本信息：账号、姓名、性别、手机、身份证
+- 绑定/解绑房屋：绑定时房屋状态自动变为"已绑定"
+  解绑时自动恢复"空闲"
+- 绑定/解绑车位：同上
+- 重置密码
+
+【11.8 收费管理（水费/电费/停车费）】
+- 管理端：可新增费用记录、编辑、删除
+- 按月份和状态筛选
+- 查看关联的房屋编号/业主姓名
+- 业主端：查看自己的费用、在线缴费
+- 缴费后自动更新状态和缴费时间
+
+【11.9 投诉管理】
+- 业主端：提交投诉（标题+内容）、查看处理状态
+- 管理端：查看投诉列表、回复处理、删除
+
+【11.10 报修管理】
+- 业主端：提交报修请求、查看处理进度
+- 管理端：查看报修列表、处理报修、删除
+- 状态：待处理 → 处理中 → 已完成
+
+【11.11 公告管理】
+- 管理端：新增/编辑/删除公告
+- 业主端：查看公告列表、查看公告详情
+
+===========================================================================
+                          文档结束
+===========================================================================
